@@ -1,0 +1,98 @@
+{
+  "title": "AlphaFold 3",
+  "subtitle": "Architecture, Benchmarking, and Biomolecular Interaction Prediction",
+  "introduction": {
+    "what_is_it": "AlphaFold 3 (AF3) is an advanced artificial intelligence system developed by Google DeepMind and Isomorphic Labs capable of accurately predicting the 3D structures of a vast array of biomolecular complexes. Unlike previous models that were optimized solely for proteins, AF3 uses a novel diffusion-based architecture to predict the raw atomic coordinates of complexes containing proteins, DNA, RNA, small molecule ligands, ions, and chemically modified residues.",
+    "primary_goal": "The primary goal of AlphaFold 3 is to move beyond the static picture of individual proteins to capture the dynamic interactions between various molecules within a cell. By accurately modeling how proteins interact with other biomolecules—especially small molecule ligands—AF3 aims to facilitate the bottom-up modeling of cellular components, significantly accelerate the drug discovery process, and reduce the time and costs associated with experimental structural biology."
+  },
+  "comparison_af2": {
+    "title": "AlphaFold 3 vs. AlphaFold 2",
+    "points": [
+      {
+        "topic": "Scope and Tokenization",
+        "description": "AF2 was strictly optimized for proteins. AF3 generalizes its inputs to accommodate arbitrary chemical components. Standard amino acids and nucleotides are represented as single tokens, while other molecules (like ligands) are tokenized at the individual heavy-atom level."
+      },
+      {
+        "topic": "Structure Generation",
+        "description": "AF2 used a Structure Module parameterizing side chains by torsion angles. AF3 replaces this with a generative Diffusion Module, directly predicting raw global coordinates by incrementally removing noise from atomic positions, omitting explicit geometric biases."
+      },
+      {
+        "topic": "Core Architecture",
+        "description": "AF2 used the 'Evoformer', relying heavily on Multiple Sequence Alignments (MSAs). AF3 replaces Evoformer with a simpler Pairformer module, significantly reducing MSA processing, relying instead on a single representation and eliminating column-wise attention."
+      },
+      {
+        "topic": "Performance",
+        "description": "AF3 shows far greater accuracy on protein-ligand interactions and multi-molecular complexes than state-of-the-art specialized docking tools, essentially achieving blind docking capabilities without separate algorithms."
+      }
+    ]
+  },
+  "architecture": {
+    "title": "Architectural Breakdown",
+    "description": "AlphaFold 3's architecture is a conditional diffusion model divided into a massive conditioning trunk and a Diffusion Module.",
+    "blocks": [
+      {
+        "name": "1. Tokenization and Input Feature Embedder",
+        "detail": "Uses a 'sequence-local atom attention' mechanism allowing all atoms to communicate within a sequence neighborhood, encoding chemical structures into an initial single representation and pair representation."
+      },
+      {
+        "name": "2. The Main Trunk (Conditioning Network)",
+        "detail": "A recycling loop containing three main modules: Template Embedder (processes structural templates), MSA Module (processes sequences without key-query based attention), and Pairformer Stack (processes the single and pair representations without column-wise attention). Transitions use SwiGLU instead of ReLU."
+      },
+      {
+        "name": "3. The Diffusion Module (Structure Generation)",
+        "detail": "Replaces the geometric Structure Module. Treats the complex as a cloud of atoms, starting with Gaussian noise and training a denoising transformer network to step-by-step remove noise. Lacks explicit SE(3) equivariance. Operates on atoms, aggregates to tokens, and broadcasts back to computationally scale quadratically."
+      },
+      {
+        "name": "4. Auxiliary Confidence Heads",
+        "detail": "Evaluates prediction providing pLDDT (Predicted Local Distance Difference Test, per-atom confidence), PAE (Predicted Aligned Error, relative positions), and PDE (Predicted Distance Error)."
+      }
+    ]
+  },
+  "downfalls_and_gaps": {
+    "downfalls": [
+      {
+        "issue": "Hallucinations in Unstructured Regions",
+        "detail": "AF3 hallucinated specious α-helix structures in disordered regions that should be extended loops.",
+        "resolution": "Employed cross-distillation using AlphaFold-Multimer v2 predictions to teach AF3 to mimic structured loops, and up-weighted predictions with more disorder during sample ranking."
+      },
+      {
+        "issue": "\"Reverse Docking\" Anomalies",
+        "detail": "Output highly confident predictions but docked antibodies/antigens in opposite direction to actual binding site, likely due to reduced MSA dependence.",
+        "resolution": "Workaround at the input level by completing the input sequence of the target's transmembrane region, helping normalize the docking direction."
+      }
+    ],
+    "gaps": [
+      "Attempts to reproduce static crystal structures rather than capturing dynamic physiological behaviors in solution.",
+      "Fails to effectively rank binding affinity of different candidate antibodies against a target (correlation coefficient near 0.0).",
+      "Persistent instability with reverse docking; the input workaround is inconsistent.",
+      "Struggles with reliable structures for massive or highly complex targets (e.g., 5F9 diabody).",
+      "Frequent hallucinations when processing very complex and long amino acid sequences."
+    ]
+  },
+  "sources": [
+    {
+      "title": "A comprehensive benchmarking of the AlphaFold3 for predicting biomacromolecules and their interactions",
+      "url": "https://academic.oup.com/bib/article-pdf/doi/10.1093/bib/bbaf616/65613699/bbaf616.pdf"
+    },
+    {
+      "title": "Accurate structure prediction of biomolecular interactions with AlphaFold 3 (Nature Supplementary Information)",
+      "url": "https://rcastoragev2.blob.core.windows.net/9e6c827f9d7f88eac8af0797432cefc7/41586_2024_7487_MOESM1_ESM.pdf"
+    },
+    {
+      "title": "AlphaFold 3 offers even more accurate protein structure prediction (Drug Discovery and Development)",
+      "url": "https://www.drugdiscoverytrends.com/meet-alphafold-3-which-can-accurately-model-more-than-99-of-molecular-types-in-the-protein-data-bank/"
+    },
+    {
+      "title": "AlphaFold Rises to New Heights with Version 3 (ZONTAL)",
+      "url": "https://zontal.io/alphafold-rises-with-version-3/"
+    },
+    {
+      "title": "Exploring AlphaFold 3 for CD47 Antibody-Antigen Binding Affinity: An Unexpected Discovery of Reverse docking (arXiv)",
+      "url": "https://arxiv.org/pdf/2511.14676"
+    },
+    {
+      "title": "How does AlphaFold 3 work? (EMBL-EBI)",
+      "url": "https://www.ebi.ac.uk/training/online/courses/alphafold/alphafold-3-and-alphafold-server/introducing-alphafold-3/how-does-alphafold-3-work/"
+    }
+  ]
+}

@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AlphaFold 3 - Architectural Journey</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- GSAP -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+    <!-- Custom styling -->
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Inter:wght@300;400;500&display=swap');
+        
+        :root {
+            --bg-color: #0b0c10;
+            --text-color: #c5c6c7;
+            --accent-1: #66fcf1;
+            --accent-2: #45a29e;
+            --accent-3: #8a2be2;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+        }
+
+        h1, h2, h3, h4, .outfit {
+            font-family: 'Outfit', sans-serif;
+        }
+
+        .glass-panel {
+            background: rgba(31, 40, 51, 0.4);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(102, 252, 241, 0.1);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+
+        /* Abstract glowing orbs in background */
+        .glow-orb {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.15;
+            z-index: -1;
+            animation: float 20s infinite alternate ease-in-out;
+        }
+        .orb-1 { width: 400px; height: 400px; background: var(--accent-1); top: -10%; left: -10%; }
+        .orb-2 { width: 500px; height: 500px; background: var(--accent-3); bottom: -20%; right: -10%; animation-delay: -5s; }
+
+        @keyframes float {
+            0% { transform: translate(0, 0) scale(1); }
+            100% { transform: translate(50px, 50px) scale(1.1); }
+        }
+
+        /* Reveal sections */
+        .reveal-section {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+
+        /* Gradient text */
+        .text-gradient {
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-image: linear-gradient(90deg, var(--accent-1), var(--accent-3));
+        }
+        
+    </style>
+</head>
+<body class="antialiased selection:bg-[#66fcf1] selection:text-black">
+
+    <div class="glow-orb orb-1"></div>
+    <div class="glow-orb orb-2"></div>
+
+    <!-- Hero Section -->
+    <section class="min-h-screen flex flex-col items-center justify-center p-8 relative" id="hero">
+        <div class="absolute inset-0 z-0 opacity-20 bg-center bg-cover bg-no-repeat" style="background-image: url('/images/af3_diffusion_1771964895187.png'); mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 100%); -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 100%);"></div>
+        <div class="z-10 text-center max-w-4xl mx-auto glass-panel p-10 rounded-3xl" id="hero-content">
+            <h1 class="text-6xl md:text-8xl font-extrabold mb-4 text-white tracking-tight" id="main-title">AlphaFold 3</h1>
+            <h2 class="text-2xl md:text-3xl font-light mb-8 text-gradient" id="subtitle">Loading...</h2>
+            <div class="flex justify-center mt-6">
+                <svg class="w-8 h-8 text-[#66fcf1] animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path></svg>
+            </div>
+        </div>
+    </section>
+
+    <!-- Introduction -->
+    <section class="py-24 px-6 md:px-12 max-w-7xl mx-auto flex flex-col md:flex-row gap-12 items-center" id="intro-section">
+        <div class="w-full md:w-1/2 reveal-section">
+            <h3 class="text-3xl md:text-5xl font-semibold mb-6 text-white">What is it?</h3>
+            <p class="text-lg leading-relaxed text-gray-300 mb-6" id="intro-what"></p>
+        </div>
+        <div class="w-full md:w-1/2 glass-panel p-8 rounded-2xl reveal-section border-l-4 border-l-[#8a2be2]">
+            <h4 class="text-2xl font-bold mb-4 text-white">Primary Goal</h4>
+            <p class="text-base leading-relaxed text-gray-300" id="intro-goal"></p>
+        </div>
+    </section>
+
+    <!-- Comparison Section -->
+    <section class="py-24 bg-black/40 relative" id="comparison-section">
+        <div class="max-w-7xl mx-auto px-6 md:px-12">
+            <div class="text-center mb-16 reveal-section">
+                <h3 class="text-4xl md:text-6xl font-bold text-white mb-4">Evolution</h3>
+                <p class="text-xl text-gradient font-light">AlphaFold 3 vs. AlphaFold 2</p>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8" id="comparison-grid">
+                <!-- Dynamically populated -->
+            </div>
+        </div>
+    </section>
+
+    <!-- Architecture Section (Pinned Scrolling) -->
+    <section class="relative bg-[#0b0c10]" id="architecture-section">
+        <div class="max-w-7xl mx-auto px-6 md:px-12 py-24">
+            <div class="flex flex-col lg:flex-row gap-16">
+                
+                <!-- Left Sticky Side -->
+                <div class="w-full lg:w-1/3 lg:sticky lg:top-32 h-fit">
+                    <h3 class="text-4xl md:text-6xl font-bold text-white mb-4">Architecture</h3>
+                    <p class="text-lg text-gray-400 mb-8" id="arch-desc"></p>
+                    <div class="rounded-2xl overflow-hidden shadow-2xl border border-gray-800">
+                        <img src="/images/af3_complex_1771964914702.png" alt="AF3 Complex Visualization" class="w-full h-auto object-cover opacity-80 hover:opacity-100 transition-opacity duration-500">
+                    </div>
+                </div>
+
+                <!-- Right Scrolling Side -->
+                <div class="w-full lg:w-2/3 flex flex-col gap-8 pb-32" id="arch-blocks">
+                    <!-- Dynamically populated -->
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Downfalls and Gaps -->
+    <section class="py-24 bg-gradient-to-b from-[#0b0c10] to-[#111]" id="challenges-section">
+        <div class="max-w-7xl mx-auto px-6 md:px-12">
+            <div class="text-center mb-16 reveal-section">
+                <h3 class="text-4xl md:text-5xl font-bold text-white mb-4">Challenges & Resolutions</h3>
+                <p class="text-xl text-gray-400 font-light">Understanding the limitations of the model.</p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
+                <!-- Downfalls -->
+                <div class="flex flex-col gap-6" id="downfalls-container">
+                    <h4 class="text-2xl font-bold text-[#66fcf1] border-b border-gray-800 pb-2">Research Downfalls</h4>
+                    <!-- Populated -->
+                </div>
+
+                <!-- Gaps -->
+                <div class="glass-panel p-8 rounded-2xl border-t-4 border-t-red-500/50 reveal-section">
+                    <h4 class="text-2xl font-bold text-white mb-6">Current Gaps in Performance</h4>
+                    <ul class="space-y-4 list-disc list-inside text-gray-300" id="gaps-list">
+                        <!-- Populated -->
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Sources Footer -->
+    <footer class="bg-black py-16 px-6 relative overflow-hidden border-t border-gray-900">
+        <div class="max-w-7xl mx-auto relative z-10 text-center">
+            <h4 class="text-xl font-bold text-gray-500 mb-6 uppercase tracking-widest">Sources & Research</h4>
+            <div class="mb-8">
+                <a href="https://notebooklm.google.com/notebook/4f20d806-4ff6-4745-b7cf-c7944fb69dea" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 px-6 py-3 bg-[#1f2833] border border-[#66fcf1]/30 hover:border-[#66fcf1] rounded-full text-[#66fcf1] transition-all group shadow-[0_0_15px_rgba(102,252,241,0.1)] hover:shadow-[0_0_20px_rgba(102,252,241,0.3)]">
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M19.0003 4H5.00031C3.89574 4 3.00031 4.89543 3.00031 6V18C3.00031 19.1046 3.89574 20 5.00031 20H19.0003C20.1049 20 21.0003 19.1046 21.0003 18V6C21.0003 4.89543 20.1049 4 19.0003 4ZM5.00031 5.5H19.0003C19.2764 5.5 19.5003 5.72386 19.5003 6V18C19.5003 18.2761 19.2764 18.5 19.0003 18.5H5.00031C4.72416 18.5 4.50031 18.2761 4.50031 18V6C4.50031 5.72386 4.72416 5.5 5.00031 5.5ZM7.50031 9C7.50031 8.72386 7.72416 8.5 8.00031 8.5H16.0003C16.2764 8.5 16.5003 8.72386 16.5003 9C16.5003 9.27614 16.2764 9.5 16.0003 9.5H8.00031C7.72416 9.5 7.50031 9.27614 7.50031 9ZM7.50031 12C7.50031 11.7239 7.72416 11.5 8.00031 11.5H16.0003C16.2764 11.5 16.5003 11.7239 16.5003 12C16.5003 12.2761 16.2764 12.5 16.0003 12.5H8.00031C7.72416 12.5 7.50031 12.2761 7.50031 12ZM8.00031 14.5C7.72416 14.5 7.50031 14.7239 7.50031 15C7.50031 15.2761 7.72416 15.5 8.00031 15.5H12.0003C12.2764 15.5 12.5003 15.2761 12.5003 15C12.5003 14.7239 12.2764 14.5 12.0003 14.5H8.00031Z" fill-rule="evenodd" clip-rule="evenodd"/></svg>
+                    <span>View Primary Research on NotebookLM</span>
+                    <svg class="w-4 h-4 ml-1 transform group-hover:-translate-y-1 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                </a>
+            </div>
+            <div class="flex flex-wrap justify-center gap-4" id="sources-container">
+                <!-- Populated -->
+            </div>
+            <p class="mt-12 text-gray-600 text-sm">Data gathered via NotebookLM &middot; AlphaFold 3 Web App</p>
+        </div>
+    </footer>
+
+    <script src="/web/app.js"></script>
+</body>
+</html>
